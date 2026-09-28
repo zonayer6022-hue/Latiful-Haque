@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Academic Task Hub</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; color: #333; }
+    .card { background: white; max-width: 600px; margin: 30px auto; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    h2 { margin-top: 0; color: #1a73e8; }
+    button { background: #1a73e8; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+    button:hover { background: #1557b0; }
+    input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    .hidden { display: none; }
+    .semester-btn { background: #e8f0fe; color: #1a73e8; border: 1px solid #aecbfa; margin-bottom: 8px; text-align: left; }
+    .semester-btn:hover { background: #d2e3fc; }
+    .task-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 10px 0; }
+    .delete-btn { background: #dc3545; width: auto; padding: 4px 8px; font-size: 12px; }
+    .error { color: red; font-size: 14px; margin-top: 5px; }
+  </style>
+</head>
+<body>
+
+  <!-- SIMPLE PASSWORD LOGIN SCREEN -->
+  <div id="login-screen" class="card">
+    <h2>Academic Task Hub</h2>
+    <p>Enter your app passcode to log in:</p>
+    <input type="password" id="passcode-input" placeholder="Enter password (default: 1234)">
+    <div id="login-error" class="error"></div>
+    <button onclick="login()">Log In</button>
+  </div>
+
+  <!-- SEMESTER SELECTION SCREEN -->
+  <div id="semester-screen" class="card hidden">
+    <h2>Select Semester</h2>
+    <div id="semester-list">Loading semesters...</div>
+    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+    <h3>Add New Semester</h3>
+    <input type="text" id="new-semester-input" placeholder="e.g., Fall 2026">
+    <button onclick="addSemester()">Create Semester</button>
+  </div>
+
+  <!-- MAIN TASK DASHBOARD -->
+  <div id="task-screen" class="card hidden">
+    <button onclick="showSemesters()" style="background:#6c757d; width:auto; padding:5px 10px; margin-bottom:15px;">← Change Semester</button>
+    <h2 id="current-semester-title">Tasks</h2>
+    
+    <h3>Add Task (Auto Email Reminder)</h3>
+    <input type="text" id="task-title" placeholder="Task Name (e.g. Midterm Copy Check)">
+    <input type="date" id="task-date">
+    <input type="time" id="task-time">
+    <button onclick="addTask()">Add Task & Set Reminder</button>
+
+    <h3 style="margin-top:25px;">Current Tasks</h3>
+    <div id="task-list">Loading tasks...</div>
+  </div>
+
+  <script>
+    // YOUR GOOGLE APPS SCRIPT URL
+    const API_URL = "https://script.google.com/macros/s/AKfycbzs-xb_CbRo1EijyPS3gh7lPchOxPALna5XYihADPZjrFUu76Y9ZlaxCVRTePq7mZFh/exec";
+    
+    // YOUR APP PASSWORD (Change "1234" to whatever password you want!)
+    const APP_PASSWORD = "1234";
+
+    let activeSemester = "";
+
+    function login() {
+      const input = document.getElementById("passcode-input").value;
+      if (input === APP_PASSWORD) {
+        document.getElementById("login-screen").classList.add("hidden");
+        showSemesters();
+      } else {
+        document.getElementById("login-error").innerText = "Incorrect password!";
+      }
+    }
+
+    function showSemesters() {
+      document.getElementById("semester-screen").classList.remove("hidden");
+      document.getElementById("task-screen").classList.add("hidden");
+      fetch(`${API_URL}?action=getSemesters`)
+        .then(res => res.json())
+        .then(data => {
+          let html = "";
+          data.forEach(sem => {
+            html += `<button class="semester-btn" onclick="loadSemester('${sem}')">${sem}</button>`;
+          });
+          document.getElementById("semester-list").innerHTML = html || "No semesters found.";
+        });
+    }
+
+    function addSemester() {
+      const semName = document.getElementById("new-semester-input").value;
+      if (!semName) return;
+      fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "addSemester", semesterName: semName })
+      }).then(() => {
+        document.getElementById("new-semester-input").value = "";
+        showSemesters();
+      });
+    }
+
+    function loadSemester(sem) {
+      activeSemester = sem;
+      document.getElementById("current-semester-title").innerText = `${sem} Tasks`;
+      document.getElementById("semester-screen").classList.add("hidden");
+      document.getElementById("task-screen").classList.remove("hidden");
+      fetchTasks();
+    }
+
+    function fetchTasks() {
+      fetch(`${API_URL}?action=getTasks&semester=${encodeURIComponent(activeSemester)}`)
+        .then(res => res.json())
+        .then(data => {
+          let html = "";
+          data.forEach(t => {
+            html += `
+              <div class="task-item">
+                <div>
+                  <strong>${t.task}</strong><br>
+                  <small>${t.date || ''} ${t.time || ''}</small>
+                </div>
+                <button class="delete-btn" onclick="deleteTask(${t.id})">Delete</button>
+              </div>`;
+          });
+          document.getElementById("task-list").innerHTML = html || "No tasks added yet.";
+        });
+    }
+
+    function addTask() {
+      const task = document.getElementById("task-title").value;
+      const date = document.getElementById("task-date").value;
+      const time = document.getElementById("task-time").value;
+      if (!task) return;
+
+      fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "addTask", semester: activeSemester, task: task, date: date, time: time })
+      }).then(() => {
+        document.getElementById("task-title").value = "";
+        document.getElementById("task-date").value = "";
+        document.getElementById("task-time").value = "";
+        fetchTasks();
+      });
+    }
+
+    function deleteTask(rowId) {
+      fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "deleteTask", semester: activeSemester, rowId: rowId })
+      }).then(() => fetchTasks());
+    }
+  </script>
+</body>
+</html>
