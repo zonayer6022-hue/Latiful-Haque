@@ -10,18 +10,19 @@
     h2 { margin-top: 0; color: #1a73e8; }
     button { background: #1a73e8; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
     button:hover { background: #1557b0; }
-    input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    input, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
     .hidden { display: none; }
     .semester-btn { background: #e8f0fe; color: #1a73e8; border: 1px solid #aecbfa; margin-bottom: 8px; text-align: left; }
     .semester-btn:hover { background: #d2e3fc; }
     .task-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 10px 0; }
     .delete-btn { background: #dc3545; width: auto; padding: 4px 8px; font-size: 12px; }
+    .badge { background: #e8f0fe; color: #1a73e8; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
     .error { color: red; font-size: 14px; margin-top: 5px; }
   </style>
 </head>
 <body>
 
-  <!-- SIMPLE PASSWORD LOGIN SCREEN -->
+  <!-- LOGIN SCREEN -->
   <div id="login-screen" class="card">
     <h2>Academic Task Hub</h2>
     <p>Enter your app passcode to log in:</p>
@@ -32,7 +33,7 @@
 
   <!-- SEMESTER SELECTION SCREEN -->
   <div id="semester-screen" class="card hidden">
-    <h2>Select Semester</h2>
+    <h2>Select Semester / Tab</h2>
     <div id="semester-list">Loading semesters...</div>
     <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
     <h3>Add New Semester</h3>
@@ -45,23 +46,28 @@
     <button onclick="showSemesters()" style="background:#6c757d; width:auto; padding:5px 10px; margin-bottom:15px;">← Change Semester</button>
     <h2 id="current-semester-title">Tasks</h2>
     
-    <h3>Add Task (Auto Email Reminder)</h3>
+    <h3>Add Task (Auto Email to latiful214@gmail.com)</h3>
+    <label style="font-size:12px; font-weight:bold;">Section / Category</label>
+    <select id="task-section">
+      <option value="Class Updates">Class Updates</option>
+      <option value="Project">Project</option>
+      <option value="Manuscript/Paper">Manuscript / Paper</option>
+      <option value="Schedule">Schedule / Daily Work</option>
+      <option value="General">General</option>
+    </select>
+
     <input type="text" id="task-title" placeholder="Task Name (e.g. Midterm Copy Check)">
     <input type="date" id="task-date">
     <input type="time" id="task-time">
-    <button onclick="addTask()">Add Task & Set Reminder</button>
+    <button onclick="addTask()">Add Task & Set 10-Min Reminder</button>
 
     <h3 style="margin-top:25px;">Current Tasks</h3>
     <div id="task-list">Loading tasks...</div>
   </div>
 
   <script>
-    // YOUR GOOGLE APPS SCRIPT URL
     const API_URL = "https://script.google.com/macros/s/AKfycbzs-xb_CbRo1EijyPS3gh7lPchOxPALna5XYihADPZjrFUu76Y9ZlaxCVRTePq7mZFh/exec";
-    
-    // YOUR APP PASSWORD (Change "1234" to whatever password you want!)
     const APP_PASSWORD = "1234";
-
     let activeSemester = "";
 
     function login() {
@@ -117,6 +123,7 @@
             html += `
               <div class="task-item">
                 <div>
+                  <span class="badge">${t.section || 'General'}</span><br>
                   <strong>${t.task}</strong><br>
                   <small>${t.date || ''} ${t.time || ''}</small>
                 </div>
@@ -128,6 +135,7 @@
     }
 
     function addTask() {
+      const section = document.getElementById("task-section").value;
       const task = document.getElementById("task-title").value;
       const date = document.getElementById("task-date").value;
       const time = document.getElementById("task-time").value;
@@ -135,7 +143,7 @@
 
       fetch(API_URL, {
         method: "POST",
-        body: JSON.stringify({ action: "addTask", semester: activeSemester, task: task, date: date, time: time })
+        body: JSON.stringify({ action: "addTask", semester: activeSemester, section: section, task: task, date: date, time: time })
       }).then(() => {
         document.getElementById("task-title").value = "";
         document.getElementById("task-date").value = "";
