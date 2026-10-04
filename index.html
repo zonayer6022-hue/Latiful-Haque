@@ -1,163 +1,471 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Academic Task Hub</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; color: #333; }
-    .card { background: white; max-width: 600px; margin: 30px auto; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-    h2 { margin-top: 0; color: #1a73e8; }
-    button { background: #1a73e8; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
-    button:hover { background: #1557b0; }
-    input, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-    .hidden { display: none; }
-    .semester-btn { background: #e8f0fe; color: #1a73e8; border: 1px solid #aecbfa; margin-bottom: 8px; text-align: left; }
-    .semester-btn:hover { background: #d2e3fc; }
-    .task-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 10px 0; }
-    .delete-btn { background: #dc3545; width: auto; padding: 4px 8px; font-size: 12px; }
-    .badge { background: #e8f0fe; color: #1a73e8; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-    .error { color: red; font-size: 14px; margin-top: 5px; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Work Dashboard</title>
+<style>
+:root{--bg:#f4f6f3;--card:#fff;--ink:#1c2620;--mute:#66736b;--line:#dfe5df;--brand:#2f6b4a;--brand2:#e3f0e7;--warn:#b4541a;--warnbg:#fdeede;--info:#2a5f8f;--infobg:#e4eff9;--bad:#a8322d;--badbg:#fbe6e4}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+h1,h2,h3{margin:0;font-weight:650}
+button,input,select,textarea{font:inherit;color:inherit}
+[hidden]{display:none!important}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.small{padding:3px 8px;font-size:12px}
+.btn.danger{color:var(--bad)}
+/* login */
+#login{min-height:100vh;display:grid;place-items:center;padding:16px}
+#login form{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px;width:100%;max-width:360px}
+#login h1{font-size:20px;margin-bottom:4px}
+#login p{color:var(--mute);margin:0 0 16px}
+label{display:block;font-size:12px;color:var(--mute);margin:10px 0 4px}
+input,select,textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff}
+textarea{min-height:70px;resize:vertical}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
+.err{color:var(--bad);min-height:20px;margin-top:10px;font-size:13px}
+/* layout */
+#app{display:grid;grid-template-columns:210px 1fr;min-height:100vh}
+aside{background:#1f3a2b;color:#dfeae3;padding:18px 10px;position:sticky;top:0;height:100vh}
+aside .logo{font-weight:700;font-size:16px;padding:0 10px 16px;color:#fff}
+aside a{display:block;padding:9px 10px;border-radius:8px;color:inherit;text-decoration:none;margin-bottom:2px}
+aside a:hover{background:#2b4d3a}
+aside a.on{background:#fff;color:#1f3a2b;font-weight:600}
+main{min-width:0;padding:18px 22px 60px}
+.top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
+.top h1{font-size:20px;flex:1;min-width:150px}
+.top select{width:auto}
+#sync{font-size:12px;color:var(--mute);min-width:60px;text-align:right}
+.banner{background:var(--warnbg);color:var(--warn);border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:13px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.ph{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ph h2{font-size:15px}
+.ph div{display:flex;gap:6px;flex-wrap:wrap}
+.empty{color:var(--mute);margin:6px 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--mute);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid #eef1ee;vertical-align:top;min-width:70px}
+tr.grp td{background:var(--brand2);color:var(--brand);font-weight:650;border-bottom:0}
+td.act{white-space:nowrap;text-align:right;min-width:0}
+select.st{width:auto;min-width:96px;padding:3px 6px;border-radius:999px;font-size:12px;border-color:transparent;cursor:pointer}
+.none{background:#eef1ee;color:var(--mute)}.ok{background:var(--brand2);color:var(--brand)}
+.warn{background:var(--warnbg);color:var(--warn)}.info{background:var(--infobg);color:var(--info)}
+/* dashboard */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.card .n{font-size:26px;font-weight:700;line-height:1.1}
+.card .l{color:var(--mute);font-size:12px;margin-top:4px}
+.card.alert .n{color:var(--bad)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.cols .panel{margin:0}
+ul.items{list-style:none;margin:0;padding:0}
+ul.items li{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid #eef1ee;align-items:baseline}
+ul.items li:last-child{border:0}
+.when{flex:0 0 112px;color:var(--mute);font-size:12px}
+.what{flex:1;min-width:0}
+.tag{font-size:11px;border-radius:999px;padding:1px 8px;background:#eef1ee;color:var(--mute);white-space:nowrap}
+.late .when{color:var(--bad);font-weight:600}
+.bar{height:8px;background:#eef1ee;border-radius:99px;overflow:hidden;margin:4px 0 10px}
+.bar i{display:block;height:100%;background:var(--brand)}
+.row2{display:flex;justify-content:space-between;font-size:13px}
+/* modal */
+#modal{position:fixed;inset:0;background:rgba(20,30,24,.45);display:grid;place-items:center;padding:14px;z-index:10}
+#modal form{background:#fff;border-radius:14px;padding:20px;width:100%;max-width:520px;max-height:92vh;overflow:auto}
+#modal h2{font-size:16px;margin-bottom:6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.grid2 .full{grid-column:1/-1}
+.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1c2620;color:#fff;padding:9px 14px;border-radius:8px;font-size:13px;z-index:20}
+@media(max-width:760px){
+  #app{grid-template-columns:1fr}
+  aside{position:static;height:auto;display:flex;overflow-x:auto;padding:8px;gap:4px}
+  aside .logo{display:none}
+  aside a{white-space:nowrap;margin:0}
+  main{padding:14px 12px 50px}
+  .grid2{grid-template-columns:1fr}
+}
+</style>
 </head>
 <body>
 
-  <!-- LOGIN SCREEN -->
-  <div id="login-screen" class="card">
-    <h2>Academic Task Hub</h2>
-    <p>Enter your app passcode to log in:</p>
-    <input type="password" id="passcode-input" placeholder="Enter password (default: 1234)">
-    <div id="login-error" class="error"></div>
-    <button onclick="login()">Log In</button>
-  </div>
+<div id="login">
+  <form id="loginForm">
+    <h1>Work Dashboard</h1>
+    <p id="loginNote">Sign in to continue.</p>
+    <label for="em">Email</label>
+    <input id="em" type="email" autocomplete="username" required>
+    <label for="pw">Password</label>
+    <input id="pw" type="password" autocomplete="current-password" required>
+    <div class="err" id="loginErr"></div>
+    <button class="btn primary" style="width:100%">Sign in</button>
+  </form>
+</div>
 
-  <!-- SEMESTER SELECTION SCREEN -->
-  <div id="semester-screen" class="card hidden">
-    <h2>Select Semester / Tab</h2>
-    <div id="semester-list">Loading semesters...</div>
-    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-    <h3>Add New Semester</h3>
-    <input type="text" id="new-semester-input" placeholder="e.g., Fall 2026">
-    <button onclick="addSemester()">Create Semester</button>
-  </div>
+<div id="app" hidden>
+  <aside><div class="logo">Work Dashboard</div><nav id="nav"></nav></aside>
+  <main>
+    <div class="top">
+      <h1 id="pageTitle"></h1>
+      <span id="sync"></span>
+      <select id="semSel" aria-label="Semester"></select>
+      <button class="btn" id="refresh">Refresh</button>
+      <button class="btn" id="logout">Log out</button>
+    </div>
+    <div class="banner" id="demoBanner" hidden>Demo mode: no Google Sheet is connected yet, so changes are saved only in this browser. Add your Apps Script URL to config.js to connect the sheet.</div>
+    <div id="view"></div>
+  </main>
+</div>
 
-  <!-- MAIN TASK DASHBOARD -->
-  <div id="task-screen" class="card hidden">
-    <button onclick="showSemesters()" style="background:#6c757d; width:auto; padding:5px 10px; margin-bottom:15px;">← Change Semester</button>
-    <h2 id="current-semester-title">Tasks</h2>
-    
-    <h3>Add Task (Auto Email to latiful214@gmail.com)</h3>
-    <label style="font-size:12px; font-weight:bold;">Section / Category</label>
-    <select id="task-section">
-      <option value="Class Updates">Class Updates</option>
-      <option value="Project">Project</option>
-      <option value="Manuscript/Paper">Manuscript / Paper</option>
-      <option value="Schedule">Schedule / Daily Work</option>
-      <option value="General">General</option>
-    </select>
+<div id="modal" hidden></div>
+<div id="toast" hidden></div>
 
-    <input type="text" id="task-title" placeholder="Task Name (e.g. Midterm Copy Check)">
-    <input type="date" id="task-date">
-    <input type="time" id="task-time">
-    <button onclick="addTask()">Add Task & Set 10-Min Reminder</button>
+<script src="config.js"></script>
+<script>
+"use strict";
+/* ---------- helpers ---------- */
+const API_URL = (window.DASHBOARD_API_URL || "").trim();
+const DEMO = !API_URL;
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const iso = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+const todayISO = () => iso(new Date());
+const plusDays = n => { const d = new Date(); d.setDate(d.getDate() + n); return iso(d); };
+const isISO = s => /^\d{4}-\d{2}-\d{2}$/.test(s || "");
+function fmtDate(s) {
+  if (!isISO(s)) return s || "";
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-GB", {weekday: "short", day: "numeric", month: "short", year: "numeric"});
+}
+const DONE = new Set(["done", "completed", "submitted", "published", "accepted"]);
+const isDone = v => DONE.has(String(v || "").trim().toLowerCase());
+function tone(v) {
+  v = String(v || "").trim().toLowerCase();
+  if (!v) return "none";
+  if (isDone(v)) return "ok";
+  if (v.startsWith("not") || v === "pending") return "warn";
+  return "info";
+}
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 3500);
+}
 
-    <h3 style="margin-top:25px;">Current Tasks</h3>
-    <div id="task-list">Loading tasks...</div>
-  </div>
+/* ---------- data model (each table is one DB_ tab in the Google Sheet) ---------- */
+const ST = ["", "Pending", "In progress", "Done"];
+const MEET = ["", "Completed", "Not completed"];
+const TYPES = ["Quiz 1", "Midterm", "Quiz 2", "Final", "Assignment"];
+const F = (k, l, t = "text", o = {}) => ({k, l, t, ...o});
+const courseOpts = () => db.Courses.filter(c => c.semester_id === semId).map(c => c.code);
+const paperOpts = () => db.Manuscripts.map(m => m.name);
 
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzs-xb_CbRo1EijyPS3gh7lPchOxPALna5XYihADPZjrFUu76Y9ZlaxCVRTePq7mZFh/exec";
-    const APP_PASSWORD = "1234";
-    let activeSemester = "";
+const TABLES = {
+  Semesters: {title: "Semesters", one: "semester", fields: [
+    F("name", "Semester name", "text", {req: 1}), F("start", "Start date", "date"), F("end", "End date", "date"), F("notes", "Notes", "area")]},
+  Courses: {title: "Courses in this semester", one: "course", scoped: 1, fields: [
+    F("code", "Course / section", "text", {req: 1}), F("title", "Course title"), F("notes", "Notes", "area")]},
+  ClassUpdates: {title: "Class updates", one: "task", scoped: 1, group: "period", fields: [
+    F("period", "Period (e.g. September)", "text", {req: 1, sug: 1}), F("course", "Course", "select", {opts: courseOpts}),
+    F("task", "Task", "text", {req: 1, sug: 1}), F("detail", "Detail"), F("date", "Date", "date"), F("time", "Time"),
+    F("deadline", "Deadline", "date"), F("status", "Status", "select", {opts: ST, inline: 1})]},
+  Assessments: {title: "Quizzes, exams and assignments", one: "row", scoped: 1, group: "type", groupOrder: TYPES, fields: [
+    F("type", "Type", "select", {opts: TYPES, req: 1}), F("course", "Course", "select", {opts: courseOpts}),
+    F("assigning", "Assigning / question prep", "select", {opts: ST, inline: 1}), F("date", "Date", "date"), F("deadline", "Deadline", "date"),
+    F("checking", "Checking", "select", {opts: ST, inline: 1}), F("scanning", "Scanning", "select", {opts: ST, inline: 1}),
+    F("marks_upload", "Marks upload", "select", {opts: ST, inline: 1}), F("done_by", "Done by", "text", {sug: 1})]},
+  Projects: {title: "Projects", one: "project", fields: [
+    F("name", "Name", "text", {req: 1}), F("organization", "Organization", "text", {sug: 1}), F("stage", "Current stage", "text", {sug: 1}),
+    F("new_task", "New task", "area"), F("responsible", "Responsible", "text", {sug: 1}), F("deadline", "Deadline", "date"),
+    F("status", "Status", "text", {sug: 1}), F("decision", "Decision"), F("priority", "Priority", "select", {opts: ["", "High", "Medium", "Low"]})]},
+  Manuscripts: {title: "Manuscripts / papers", one: "manuscript", fields: [
+    F("name", "Short name", "text", {req: 1}), F("title", "Title", "area"), F("authors", "Authors"), F("journal", "Journal", "text", {sug: 1}),
+    F("responsible", "Responsible", "text", {sug: 1}), F("stage", "Current stage", "text", {sug: 1}), F("status", "Status", "text", {sug: 1}),
+    F("submission_date", "Submission date", "date"), F("decision", "Decision")]},
+  Milestones: {title: "Next actions by manuscript", one: "action", group: "manuscript", sort: "deadline", fields: [
+    F("manuscript", "Manuscript", "select", {opts: paperOpts, req: 1}), F("deadline", "Deadline", "date"),
+    F("action", "Next action", "area", {req: 1}), F("status", "Status", "select", {opts: ST, inline: 1})]},
+  Schedule: {title: "Schedule", one: "day", sort: "date", fields: [
+    F("date", "Date", "date", {req: 1}), F("work", "Other work", "area"), F("work_time", "Work time"),
+    F("work_status", "Work done?", "select", {opts: MEET, inline: 1}), F("meeting", "Meeting", "text", {sug: 1}),
+    F("people", "Person / organization"), F("meeting_time", "Meeting time"), F("purpose", "Purpose"),
+    F("action_after", "Action after meeting", "area"), F("responsible", "Responsible", "text", {sug: 1}), F("follow_up", "Follow up"),
+    F("meeting_status", "Meeting done?", "select", {opts: MEET, inline: 1})]},
+  Contacts: {title: "Contact list", one: "contact", sort: "name", fields: [
+    F("name", "Name", "text", {req: 1}), F("designation", "Designation"), F("phone", "Phone"), F("email", "Email")]}
+};
+const PAGES = [
+  {id: "dashboard", label: "Dashboard"},
+  {id: "class", label: "Class Updates", tables: ["ClassUpdates"]},
+  {id: "assess", label: "Quizzes & Exams", tables: ["Assessments"]},
+  {id: "projects", label: "Projects", tables: ["Projects"]},
+  {id: "papers", label: "Manuscripts", tables: ["Manuscripts", "Milestones"]},
+  {id: "schedule", label: "Schedule", tables: ["Schedule"]},
+  {id: "contacts", label: "Contacts", tables: ["Contacts"]},
+  {id: "semesters", label: "Semesters & Courses", tables: ["Semesters", "Courses"]}
+];
+const fieldsOf = tn => ["id", ...(TABLES[tn].scoped ? ["semester_id"] : []), ...TABLES[tn].fields.map(f => f.k)];
+const blank = tn => Object.fromEntries(fieldsOf(tn).map(k => [k, ""]));
+const emptyDb = () => Object.fromEntries(Object.keys(TABLES).map(t => [t, []]));
 
-    function login() {
-      const input = document.getElementById("passcode-input").value;
-      if (input === APP_PASSWORD) {
-        document.getElementById("login-screen").classList.add("hidden");
-        showSemesters();
-      } else {
-        document.getElementById("login-error").innerText = "Incorrect password!";
-      }
+let db = emptyDb();
+let token = localStorage.getItem("wd_token") || "";
+let semId = localStorage.getItem("wd_sem") || "";
+const rowsOf = tn => db[tn].filter(r => !TABLES[tn].scoped || r.semester_id === semId);
+
+/* ---------- backend ---------- */
+async function call(action, payload = {}) {
+  if (DEMO) {
+    if (action === "login") return {ok: true, token: "demo"};
+    if (action === "getAll") return {ok: true, data: JSON.parse(localStorage.getItem("wd_demo") || "{}")};
+    localStorage.setItem("wd_demo", JSON.stringify(db));
+    return {ok: true};
+  }
+  const res = await fetch(API_URL, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify({action, token, ...payload})});
+  const j = await res.json();
+  if (!j.ok) {
+    if (j.error === "AUTH") { logout(); throw new Error("Session expired, please sign in again"); }
+    throw new Error(j.error || "Request failed");
+  }
+  return j;
+}
+async function sync(action, payload) {
+  $("#sync").textContent = "Saving…";
+  try { await call(action, payload); $("#sync").textContent = "Saved"; return true; }
+  catch (e) { $("#sync").textContent = "Not saved"; toast("Could not save: " + e.message + ". Press Refresh to reload."); return false; }
+}
+async function loadAll() {
+  $("#sync").textContent = "Loading…";
+  const j = await call("getAll");
+  db = emptyDb();
+  for (const t in TABLES) if (Array.isArray(j.data[t])) db[t] = j.data[t];
+  if (!db.Semesters.some(s => s.id === semId)) semId = db.Semesters.length ? db.Semesters[db.Semesters.length - 1].id : "";
+  $("#sync").textContent = "";
+}
+
+/* ---------- login ---------- */
+function showApp(on) { $("#login").hidden = on; $("#app").hidden = !on; $("#demoBanner").hidden = !DEMO; }
+function logout() { token = ""; localStorage.removeItem("wd_token"); showApp(false); }
+if (DEMO) $("#loginNote").textContent = "Demo mode: no Google Sheet connected yet, so any email and password will work.";
+$("#loginForm").addEventListener("submit", async e => {
+  e.preventDefault(); $("#loginErr").textContent = "Signing in…";
+  try {
+    const j = await call("login", {email: $("#em").value, password: $("#pw").value});
+    token = j.token; localStorage.setItem("wd_token", token); $("#pw").value = "";
+    await start(); $("#loginErr").textContent = "";
+  } catch (err) { $("#loginErr").textContent = err.message === "LOGIN" ? "Wrong email or password." : "Could not sign in: " + err.message; }
+});
+$("#logout").onclick = logout;
+$("#refresh").onclick = async () => { try { await loadAll(); render(); } catch (e) { toast(e.message); } };
+async function start() { await loadAll(); showApp(true); render(); }
+
+/* ---------- rendering ---------- */
+const page = () => PAGES.find(p => p.id === location.hash.slice(1)) || PAGES[0];
+window.addEventListener("hashchange", render);
+$("#semSel").onchange = e => { semId = e.target.value; localStorage.setItem("wd_sem", semId); render(); };
+
+function render() {
+  const p = page();
+  $("#nav").innerHTML = PAGES.map(x => `<a href="#${x.id}" class="${x.id === p.id ? "on" : ""}">${x.label}</a>`).join("");
+  $("#pageTitle").textContent = p.label;
+  $("#semSel").innerHTML = db.Semesters.length ? db.Semesters.map(s => `<option value="${esc(s.id)}" ${s.id === semId ? "selected" : ""}>${esc(s.name)}</option>`).join("") : "<option>No semester yet</option>";
+  $("#view").innerHTML = p.tables ? p.tables.map(tableHTML).join("") : dashHTML();
+}
+
+function cell(f, r, tn) {
+  const v = r[f.k] ?? "";
+  if (f.inline) {
+    const opts = f.opts.includes(v) ? f.opts : [...f.opts, v];
+    return `<select class="st ${tone(v)}" data-inline data-t="${tn}" data-id="${esc(r.id)}" data-k="${f.k}" aria-label="${esc(f.l)}">` +
+      opts.map(o => `<option ${o === v ? "selected" : ""} value="${esc(o)}">${esc(o || "—")}</option>`).join("") + "</select>";
+  }
+  if (f.t === "date") return esc(fmtDate(v));
+  return esc(v).replace(/\n/g, "<br>");
+}
+function tableHTML(tn) {
+  const T = TABLES[tn];
+  let rows = rowsOf(tn);
+  if (T.sort) rows = [...rows].sort((a, b) => String(a[T.sort] || "~").localeCompare(String(b[T.sort] || "~")));
+  const extra = tn === "Assessments" ? `<button class="btn" data-act="fill">Add rows for every course</button>` : "";
+  let h = `<section class="panel"><div class="ph"><h2>${T.title}</h2><div>${extra}<button class="btn primary" data-act="add" data-t="${tn}">+ Add ${T.one}</button></div></div>`;
+  if (T.scoped && !semId) return h + `<p class="empty">Add a semester first.</p></section>`;
+  if (!rows.length) return h + `<p class="empty">Nothing here yet.</p></section>`;
+  const cols = T.fields.filter(f => f.k !== T.group);
+  const tr = r => `<tr>${cols.map(f => `<td>${cell(f, r, tn)}</td>`).join("")}<td class="act"><button class="btn small" data-act="edit" data-t="${tn}" data-id="${esc(r.id)}">Edit</button> <button class="btn small danger" data-act="del" data-t="${tn}" data-id="${esc(r.id)}">Delete</button></td></tr>`;
+  h += `<div class="scroll"><table><thead><tr>${cols.map(f => `<th>${esc(f.l)}</th>`).join("")}<th></th></tr></thead><tbody>`;
+  if (T.group) {
+    const g = new Map();
+    rows.forEach(r => { const k = r[T.group] || "(none)"; if (!g.has(k)) g.set(k, []); g.get(k).push(r); });
+    let keys = [...g.keys()];
+    if (T.groupOrder) keys.sort((a, b) => (T.groupOrder.indexOf(a) + 1 || 99) - (T.groupOrder.indexOf(b) + 1 || 99));
+    keys.forEach(k => { h += `<tr class="grp"><td colspan="${cols.length + 1}">${esc(k)}</td></tr>` + g.get(k).map(tr).join(""); });
+  } else h += rows.map(tr).join("");
+  return h + "</tbody></table></div></section>";
+}
+
+function dashHTML() {
+  if (!db.Semesters.length) return `<section class="panel"><div class="ph"><h2>Welcome</h2></div>
+    <p>Your dashboard has no data yet. You can load the Summer 2026 data copied from your spreadsheet, or start with an empty dashboard.</p>
+    <div class="actions" style="justify-content:flex-start"><button class="btn primary" data-act="seed">Import my Summer 2026 data</button><a class="btn" href="#semesters" style="text-decoration:none">Start empty</a></div></section>`;
+  const t = todayISO(), in7 = plusDays(7), in14 = plusDays(14), items = [];
+  const push = (d, label, tag, pg) => { if (isISO(d)) items.push({d, label, tag, pg}); };
+  rowsOf("ClassUpdates").forEach(r => { if (!isDone(r.status)) push(r.deadline || r.date, `${r.course} · ${r.task}`, "Class", "class"); });
+  rowsOf("Assessments").forEach(r => { if (!isDone(r.marks_upload)) push(r.deadline || r.date, `${r.course} · ${r.type}`, "Exam", "assess"); });
+  db.Milestones.forEach(r => { if (!isDone(r.status)) push(r.deadline, `${r.manuscript}: ${r.action}`, "Paper", "papers"); });
+  db.Manuscripts.forEach(r => { if (!isDone(r.status)) push(r.submission_date, `${r.name}: submission`, "Paper", "papers"); });
+  db.Projects.forEach(r => { if (!isDone(r.status)) push(r.deadline, `${r.name}${r.new_task ? ": " + r.new_task : ""}`, "Project", "projects"); });
+  items.sort((a, b) => a.d.localeCompare(b.d));
+  const late = items.filter(i => i.d < t), soon = items.filter(i => i.d >= t && i.d <= in14);
+  const sched = db.Schedule.filter(r => isISO(r.date) && r.date >= t).sort((a, b) => a.date.localeCompare(b.date));
+  const cu = rowsOf("ClassUpdates"), cuDone = cu.filter(r => isDone(r.status)).length;
+  const list = (arr, cls) => arr.length ? `<ul class="items">${arr.slice(0, 12).map(i => `<li class="${cls}"><span class="when">${esc(fmtDate(i.d))}</span><span class="what">${esc(i.label)}</span><a class="tag" href="#${i.pg}" style="text-decoration:none">${i.tag}</a></li>`).join("")}</ul>${arr.length > 12 ? `<p class="empty">+ ${arr.length - 12} more</p>` : ""}` : `<p class="empty">Nothing here.</p>`;
+  const as = rowsOf("Assessments");
+  const prog = TYPES.map(ty => { const r = as.filter(x => x.type === ty); if (!r.length) return ""; const d = r.filter(x => isDone(x.marks_upload)).length;
+    return `<div class="row2"><span>${ty}</span><span>${d} of ${r.length} marks uploaded</span></div><div class="bar"><i style="width:${Math.round(100 * d / r.length)}%"></i></div>`; }).join("") || `<p class="empty">No rows yet.</p>`;
+  const mini = (rows, cols) => rows.length ? `<div class="scroll"><table><tbody>${rows.map(r => `<tr>${cols.map(c => `<td>${esc(c === "submission_date" ? fmtDate(r[c]) : r[c])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : `<p class="empty">Nothing here.</p>`;
+  return `<div class="cards">
+    <div class="card ${late.length ? "alert" : ""}"><div class="n">${late.length}</div><div class="l">Overdue open items</div></div>
+    <div class="card"><div class="n">${items.filter(i => i.d >= t && i.d <= in7).length}</div><div class="l">Due in the next 7 days</div></div>
+    <div class="card"><div class="n">${cuDone}/${cu.length}</div><div class="l">Class tasks done this semester</div></div>
+    <div class="card"><div class="n">${sched.length}</div><div class="l">Upcoming scheduled days</div></div>
+    <div class="card"><div class="n">${db.Projects.length}</div><div class="l">Projects</div></div>
+    <div class="card"><div class="n">${db.Manuscripts.length}</div><div class="l">Manuscripts</div></div></div>
+  <div class="cols">
+    <section class="panel"><div class="ph"><h2>Overdue</h2></div>${list(late, "late")}</section>
+    <section class="panel"><div class="ph"><h2>Next 14 days</h2></div>${list(soon, "")}</section>
+    <section class="panel"><div class="ph"><h2>Upcoming schedule</h2><a class="btn small" href="#schedule" style="text-decoration:none">Open</a></div>${sched.length ? `<ul class="items">${sched.slice(0, 8).map(r => `<li><span class="when">${esc(fmtDate(r.date))}</span><span class="what">${esc([r.work && r.work + (r.work_time ? " (" + r.work_time + ")" : ""), r.meeting && "Meeting: " + r.meeting + (r.meeting_time ? " (" + r.meeting_time + ")" : "")].filter(Boolean).join(" · "))}</span></li>`).join("")}</ul>` : `<p class="empty">Nothing scheduled from today onward.</p>`}</section>
+    <section class="panel"><div class="ph"><h2>Marks progress</h2><a class="btn small" href="#assess" style="text-decoration:none">Open</a></div>${prog}</section>
+    <section class="panel"><div class="ph"><h2>Projects</h2><a class="btn small" href="#projects" style="text-decoration:none">Open</a></div>${mini(db.Projects, ["name", "organization", "stage", "status"])}</section>
+    <section class="panel"><div class="ph"><h2>Manuscripts</h2><a class="btn small" href="#papers" style="text-decoration:none">Open</a></div>${mini(db.Manuscripts, ["name", "stage", "status", "submission_date"])}</section>
+  </div>`;
+}
+
+/* ---------- add / edit / delete ---------- */
+function openForm(tn, id) {
+  const T = TABLES[tn], row = id ? db[tn].find(r => r.id === id) : blank(tn);
+  if (!row) return;
+  const input = f => {
+    const v = row[f.k] ?? "", a = `id="f_${f.k}" name="${f.k}" ${f.req ? "required" : ""}`;
+    if (f.t === "select") {
+      let o = typeof f.opts === "function" ? f.opts() : f.opts;
+      if (!o.includes("")) o = ["", ...o];
+      if (!o.includes(v)) o = [...o, v];
+      return `<select ${a}>${o.map(x => `<option ${x === v ? "selected" : ""} value="${esc(x)}">${esc(x || "—")}</option>`).join("")}</select>`;
     }
-
-    function showSemesters() {
-      document.getElementById("semester-screen").classList.remove("hidden");
-      document.getElementById("task-screen").classList.add("hidden");
-      fetch(`${API_URL}?action=getSemesters`)
-        .then(res => res.json())
-        .then(data => {
-          let html = "";
-          data.forEach(sem => {
-            html += `<button class="semester-btn" onclick="loadSemester('${sem}')">${sem}</button>`;
-          });
-          document.getElementById("semester-list").innerHTML = html || "No semesters found.";
-        });
+    if (f.t === "area") return `<textarea ${a}>${esc(v)}</textarea>`;
+    if (f.t === "date") return `<input type="${isISO(v) || !v ? "date" : "text"}" ${a} value="${esc(v)}">`;
+    const dl = f.sug ? `<datalist id="dl_${f.k}">${[...new Set(db[tn].map(r => r[f.k]).filter(Boolean))].map(x => `<option value="${esc(x)}">`).join("")}</datalist>` : "";
+    return `<input ${a} value="${esc(v)}" ${f.sug ? `list="dl_${f.k}"` : ""}>${dl}`;
+  };
+  $("#modal").innerHTML = `<form><h2>${id ? "Edit" : "Add"} ${T.one}</h2><div class="grid2">${T.fields.map(f => `<div class="${f.t === "area" ? "full" : ""}"><label for="f_${f.k}">${esc(f.l)}</label>${input(f)}</div>`).join("")}</div>
+    <div class="actions"><button type="button" class="btn" data-close>Cancel</button><button class="btn primary">Save</button></div></form>`;
+  $("#modal").hidden = false;
+  $("#modal form").onsubmit = async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    T.fields.forEach(f => row[f.k] = String(fd.get(f.k) ?? "").trim());
+    if (!id) {
+      row.id = uid();
+      if (T.scoped) row.semester_id = semId;
+      db[tn].push(row);
+      if (tn === "Semesters") { semId = row.id; localStorage.setItem("wd_sem", semId); }
     }
+    $("#modal").hidden = true; render();
+    await sync("upsert", {table: tn, fields: fieldsOf(tn), row});
+  };
+  const first = $("#modal input, #modal select, #modal textarea"); if (first) first.focus();
+}
+$("#modal").addEventListener("click", e => { if (e.target.id === "modal" || e.target.hasAttribute("data-close")) $("#modal").hidden = true; });
+document.addEventListener("keydown", e => { if (e.key === "Escape") $("#modal").hidden = true; });
 
-    function addSemester() {
-      const semName = document.getElementById("new-semester-input").value;
-      if (!semName) return;
-      fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "addSemester", semesterName: semName })
-      }).then(() => {
-        document.getElementById("new-semester-input").value = "";
-        showSemesters();
-      });
-    }
+$("#view").addEventListener("click", async e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const {act, t: tn, id} = b.dataset;
+  if (act === "add") { if (TABLES[tn].scoped && !semId) return toast("Add a semester first."); openForm(tn); }
+  if (act === "edit") openForm(tn, id);
+  if (act === "del") {
+    if (!confirm("Delete this " + TABLES[tn].one + "? This cannot be undone.")) return;
+    db[tn] = db[tn].filter(r => r.id !== id);
+    if (tn === "Semesters" && semId === id) semId = db.Semesters.length ? db.Semesters[db.Semesters.length - 1].id : "";
+    render(); await sync("remove", {table: tn, id});
+  }
+  if (act === "fill") {
+    const cs = courseOpts(); if (!cs.length) return toast("Add courses to this semester first.");
+    const have = new Set(rowsOf("Assessments").map(r => r.type + "|" + r.course)), add = [];
+    TYPES.forEach(ty => cs.forEach(c => { if (!have.has(ty + "|" + c)) add.push({...blank("Assessments"), id: uid(), semester_id: semId, type: ty, course: c}); }));
+    if (!add.length) return toast("Every course already has every row.");
+    db.Assessments.push(...add); render();
+    await sync("upsertMany", {table: "Assessments", fields: fieldsOf("Assessments"), rows: add});
+  }
+  if (act === "seed") {
+    b.disabled = true; db = buildSeed(); semId = db.Semesters[0].id; localStorage.setItem("wd_sem", semId); render();
+    await sync("seed", {tables: Object.fromEntries(Object.keys(TABLES).map(t => [t, {fields: fieldsOf(t), rows: db[t]}]))});
+  }
+});
+$("#view").addEventListener("change", async e => {
+  const s = e.target; if (!s.matches("[data-inline]")) return;
+  const row = db[s.dataset.t].find(r => r.id === s.dataset.id); if (!row) return;
+  row[s.dataset.k] = s.value; s.className = "st " + tone(s.value);
+  await sync("upsert", {table: s.dataset.t, fields: fieldsOf(s.dataset.t), row});
+});
 
-    function loadSemester(sem) {
-      activeSemester = sem;
-      document.getElementById("current-semester-title").innerText = `${sem} Tasks`;
-      document.getElementById("semester-screen").classList.add("hidden");
-      document.getElementById("task-screen").classList.remove("hidden");
-      fetchTasks();
-    }
+/* ---------- existing data copied from the "Updates of Works Summer 2026" sheet ---------- */
+function buildSeed() {
+  const d = emptyDb(), s = "sem_summer2026";
+  const C = ["STAT 212.1", "STAT 212.2", "ECO 319.3", "ECO 319.4", "ECO 461.4"];
+  const add = (tn, o) => d[tn].push({...blank(tn), id: uid(), ...(TABLES[tn].scoped ? {semester_id: s} : {}), ...o});
+  d.Semesters.push({...blank("Semesters"), id: s, name: "Summer 2026"});
+  C.forEach(code => add("Courses", {code}));
 
-    function fetchTasks() {
-      fetch(`${API_URL}?action=getTasks&semester=${encodeURIComponent(activeSemester)}`)
-        .then(res => res.json())
-        .then(data => {
-          let html = "";
-          data.forEach(t => {
-            html += `
-              <div class="task-item">
-                <div>
-                  <span class="badge">${t.section || 'General'}</span><br>
-                  <strong>${t.task}</strong><br>
-                  <small>${t.date || ''} ${t.time || ''}</small>
-                </div>
-                <button class="delete-btn" onclick="deleteTask(${t.id})">Delete</button>
-              </div>`;
-          });
-          document.getElementById("task-list").innerHTML = html || "No tasks added yet.";
-        });
-    }
+  const AUG = "Last week of August", SEP = "September";
+  ["ECO 319.3", "ECO 319.4"].forEach(course => {
+    add("ClassUpdates", {period: AUG, course, task: "Slide making", detail: "1 slide", status: "Done"});
+    add("ClassUpdates", {period: AUG, course, task: "Slide upload", detail: "1 slide uploaded", status: "Done"});
+  });
+  [["STAT 212.1", "2026-09-12"], ["STAT 212.2", "2026-09-12"], ["ECO 319.3", "2026-09-15"], ["ECO 319.4", "2026-09-15"]].forEach(([course, deadline]) => {
+    add("ClassUpdates", {period: AUG, course, task: "Assigning assignment", deadline, status: "Done"});
+    add("ClassUpdates", {period: AUG, course, task: "Announcement for assignment", status: "Done"});
+  });
+  [["STAT 212.1", "2026-09-05", "11:30am-1:00pm"], ["STAT 212.2", "2026-09-07", "10:30am-12:00pm"], ["ECO 319.3", "2026-09-08", "10:00am-12:00pm"], ["ECO 319.4", "", ""], ["ECO 461.4", "", ""]]
+    .forEach(([course, date, time]) => add("ClassUpdates", {period: SEP, course, task: "Midterm copy check", date, time}));
+  [["STAT 212.1", "2026-09-12"], ["STAT 212.2", "2026-09-12"], ["ECO 319.3", "2026-09-14"], ["ECO 319.4", "2026-09-14"], ["ECO 461.4", "2026-09-15"]]
+    .forEach(([course, date]) => add("ClassUpdates", {period: SEP, course, task: "Question making for Final", date}));
 
-    function addTask() {
-      const section = document.getElementById("task-section").value;
-      const task = document.getElementById("task-title").value;
-      const date = document.getElementById("task-date").value;
-      const time = document.getElementById("task-time").value;
-      if (!task) return;
+  C.forEach(course => add("Assessments", {type: "Quiz 1", course, assigning: "Done", checking: "Done", scanning: "Done", marks_upload: "Done", done_by: "Taskia"}));
+  ["Midterm", "Quiz 2", "Final"].forEach(type => C.forEach(course => add("Assessments", {type, course})));
+  C.forEach(course => { const dl = {"STAT 212.1": "2026-09-12", "STAT 212.2": "2026-09-12", "ECO 319.3": "2026-09-15", "ECO 319.4": "2026-09-15"}[course];
+    add("Assessments", {type: "Assignment", course, assigning: dl ? "Done" : "", deadline: dl || ""}); });
 
-      fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "addTask", semester: activeSemester, section: section, task: task, date: date, time: time })
-      }).then(() => {
-        document.getElementById("task-title").value = "";
-        document.getElementById("task-date").value = "";
-        document.getElementById("task-time").value = "";
-        fetchTasks();
-      });
-    }
+  add("Projects", {name: "3s for Foods", organization: "Gain"});
+  add("Projects", {name: "Agri Finance, trust & Dairy", organization: "Nexus", stage: "Conceptual"});
+  add("Projects", {name: "Farm to Firm", organization: "ADB"});
 
-    function deleteTask(rowId) {
-      fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "deleteTask", semester: activeSemester, rowId: rowId })
-      }).then(() => fetchTasks());
-    }
-  </script>
+  add("Manuscripts", {name: "Green Skills", title: "The persistence of green skills ga…", journal: "World Bank", stage: "Data collection and analysing", status: "On going", submission_date: "2026-10-20"});
+  add("Manuscripts", {name: "Food Policy Index", authors: "Zonayer, Ishadi, Dr. Nusrat Hossain, Abeed"});
+  add("Manuscripts", {name: "Water Logging", authors: "Shahriar, Namira maam", submission_date: "2026-10-31"});
+  ["Tutor skills", "Diabetics", "Mental Health"].forEach(name => add("Manuscripts", {name}));
+  [["2026-09-12", "Qualitative data collection, KII, and policy document review"], ["2026-09-19", "Analyzing the data and develop quantitative questionnaire"],
+   ["2026-09-26", "Administer the quantitative survey and complete data collection"], ["2026-10-03", "Finalize all data analysis"],
+   ["2026-10-10", "Prepare all tables, graphs and the conceptual framework"], ["2026-10-20", "Submit the first full draft"]]
+    .forEach(([deadline, action]) => add("Milestones", {manuscript: "Green Skills", deadline, action}));
+
+  add("Schedule", {date: "2026-08-27", people: "Nusrat, Ishadi, Zonayer", meeting_time: "6-7 pm", meeting_status: "Not completed"});
+  add("Schedule", {date: "2026-08-29", meeting: "Green Skill", people: "Ruba maam, Zonayer", meeting_time: "1:30-3:00", meeting_status: "Completed"});
+  add("Schedule", {date: "2026-09-05", work: "Midterm copy check", work_time: "11:30am-1:00pm", meeting: "Green Skill", people: "Ruba maam, Zonayer, Abeed sir", meeting_time: "2:00-3:00", meeting_status: "Completed"});
+  add("Schedule", {date: "2026-09-07", work: "Midterm copy check", work_time: "10:30am-12:00pm, 12:00-1:00, 3:00-4:00", meeting: "Fortnightly Team Meeting", meeting_time: "5pm-5:45pm"});
+  add("Schedule", {date: "2026-09-08", work: "1. Making political analysis\n2. Sending mail (3s for foods)\n3. Sending a mail to Rudaba\n4. Send mail to partners (agri finance)", work_time: "10:00am-12:00pm", meeting: "Water logging", people: "Shahriar, Namira maam", meeting_time: "2:30-3:00"});
+  add("Schedule", {date: "2026-09-09", work: "Midterm copy check", work_time: "10:30am-12:00pm"});
+  add("Schedule", {date: "2026-09-10", work: "Midterm copy check", work_time: "11:30am-1:00pm"});
+  add("Schedule", {date: "2026-09-12", work: "Question making for Final", work_time: "12:00-2:00"});
+  add("Schedule", {date: "2026-09-14", work: "Question making for Final", work_time: "10:00-1:00", meeting: "With Dr. Jessia", people: "Dr. Jessia maam", meeting_time: "12:00-1:00"});
+  add("Schedule", {date: "2026-09-15", work: "Question making for Final", work_time: "10:00-1:00", meeting: "3s for foods"});
+  return d;
+}
+
+/* ---------- boot ---------- */
+if (token) start().catch(() => logout()); else showApp(false);
+</script>
 </body>
 </html>
